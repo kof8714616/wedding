@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+  
   <!-- 1. 這裡修改的是：瀏覽器分頁上顯示的標題 -->
   <title>查顏觀色 給婚趴踢邀請</title>
   
@@ -15,10 +15,9 @@
     /* ✨ 引入思源黑體作為全站預設 */
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
 
-    /* ✨ 修改為讀取您上傳到 GitHub 的本地字體檔案 (已更新檔名) */
+    /* ✨ 讀取上傳到 GitHub 的本地字體檔案 */
     @font-face {
       font-family: 'ChenYuluoyan';
-      /* 確保您上傳到 GitHub 的檔案名稱與下方 url 一致 */
       src: url('./ChenYuluoyan-2.0-Thin.ttf') format('truetype');
       font-weight: normal;
       font-style: normal;
@@ -29,14 +28,14 @@
       font-family: 'Noto Sans TC', sans-serif;
     }
 
-    /* ✨ 設定給「英文字」使用的字型樣式 (改為辰宇落雁體) */
+    /* ✨ 設定給「英文字」使用的字型樣式 (辰宇落雁體) */
     .custom-font-en {
-      font-family: 'ChenYuluoyan-2.0-Thin.ttf', sans-serif;
+      font-family: './ChenYuluoyan-2.0-Thin.ttf', sans-serif;
     }
 
-    /* ✨ 設定給「中文字(如姓名)」使用的字型樣式 (改為辰宇落雁體) */
+    /* ✨ 設定給「中文字(如姓名)」使用的字型樣式 (辰宇落雁體) */
     .custom-font-zh {
-      font-family: 'ChenYuluoyan-2.0-Thin.ttf', sans-serif;
+      font-family: './ChenYuluoyan-2.0-Thin.ttf', sans-serif;
     }
 
     @keyframes fadeIn {
@@ -62,9 +61,10 @@
       const [isGenerating, setIsGenerating] = useState(false);
       const [copySuccess, setCopySuccess] = useState(false);
 
+      // 2. 這裡修改的是：網頁內容中顯示的所有文字資訊
       const weddingInfo = {
-        groom: "顏宏能",
-        bride: "查邦貞",
+        groom: "顏宏能", // 修改封面大標題的新郎姓名
+        bride: "查邦貞", // 修改封面大標題的新娘姓名
         date: "2026年3月22日星期天",
         time: [
           "趴踢TIME 11:20",
@@ -139,6 +139,7 @@
         document.body.removeChild(textArea);
       };
 
+      // 圖標 SVG 程式碼
       const HeartIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto text-rose-400 mb-8"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>;
       const HeartIconSmall = () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto text-rose-400 mb-6"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>;
       const ArrowRightIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="rotate-90 text-white/70"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>;
@@ -158,12 +159,15 @@
               <div className="absolute inset-0 bg-black/20" />
             </div>
             <div className="relative z-10 text-center text-white px-4 flex flex-col items-center">
-              <p className="tracking-widest text-sm md:text-base mb-6 uppercase custom-font-en">Finally!! We do!</p>
+              <p className="tracking-widest text-sm md:text-base mb-6 uppercase custom-font-en">Finally!!  We do!</p>
+              
+              {/* ✨ 封面上的姓名會跟著 weddingInfo.groom 和 weddingInfo.bride 連動 */}
               <h1 className="text-5xl md:text-7xl tracking-wider mb-6 flex flex-col md:flex-row items-center gap-4 custom-font-zh">
                 <span>{weddingInfo.groom}</span>
                 <span className="text-rose-300 mx-2 text-3xl md:text-5xl">&amp;</span>
                 <span>{weddingInfo.bride}</span>
               </h1>
+              
               <p className="text-xl md:text-2xl font-light tracking-widest mt-4">
                 {weddingInfo.date}
               </p>
