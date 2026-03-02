@@ -13,13 +13,22 @@
   <div id="root"></div>
 
   <script type="text/babel">
+    const { useState } = React;
+
     function App() {
+      // AI 產生器相關狀態
+      const [relation, setRelation] = useState("");
+      const [tone, setTone] = useState("溫馨感人");
+      const [blessing, setBlessing] = useState("");
+      const [isGenerating, setIsGenerating] = useState(false);
+      const [copySuccess, setCopySuccess] = useState(false);
+
       const weddingInfo = {
         groom: "顏宏能",
         bride: "查邦貞",
         date: "2026年3月22日",
-        time: "入席時間 99:00 | 開席時間 99:30",
-        venue: "街趣 BLOCK&｜高雄活動場租｜高雄商務聚餐包場｜高雄包廂空間｜高雄外燴｜高雄派驚｜高雄抓周場地｜",
+        time: "入席時間 18:00 | 開席時間 18:30",
+        venue: "街趣 BLOCK&｜高雄活動場租｜高雄商務聚餐包場｜高雄包廂空間｜高雄外燴｜高雄派對｜高雄抓周場地",
         address: "高雄市鼓山區明倫路496號",
         coverImage: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=2000",
         galleryImages: [
@@ -31,6 +40,68 @@
         googleFormUrl: "https://forms.gle/eAJWpMw434HG5Ahx9"
       };
 
+      // 呼叫 Gemini API 產生祝福語
+      const handleGenerateBlessing = async () => {
+        setIsGenerating(true);
+        setCopySuccess(false);
+        setBlessing("");
+        
+        const apiKey = ""; // API Key 會由執行環境自動注入
+        const userRelation = relation.trim() || "親友";
+        const promptText = `請為新郎「${weddingInfo.groom}」與新娘「${weddingInfo.bride}」的婚禮寫一段大約 30~50 字的祝福語。我是他們的「${userRelation}」，請用「${tone}」的語氣撰寫，讓這段祝福顯得自然、得體又充滿心意。請直接回覆祝福語本身，不要加上引號或其他多餘的解釋。`;
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        const payload = {
+          contents: [{ parts: [{ text: promptText }] }],
+          systemInstruction: { parts: [{ text: "你是一個婚禮祝福語大師，專門替不知如何開口的賓客代筆，寫出真誠感人的婚宴祝福。" }] }
+        };
+
+        // 實作 Exponential Backoff 錯誤重試機制
+        const fetchWithRetry = async (retries = 5) => {
+          const delays = [1000, 2000, 4000, 8000, 16000];
+          for (let i = 0; i < retries; i++) {
+            try {
+              const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+              
+              if (!response.ok) throw new Error('API Error');
+              const data = await response.json();
+              return data.candidates?.[0]?.content?.parts?.[0]?.text || "祝你們新婚愉快，永浴愛河！";
+            } catch (error) {
+              if (i === retries - 1) return "抱歉，目前 AI 小助手有點忙碌，請稍後再試。在此先預祝新人新婚快樂！";
+              await new Promise(resolve => setTimeout(resolve, delays[i]));
+            }
+          }
+        };
+
+        const resultText = await fetchWithRetry();
+        setBlessing(resultText);
+        setIsGenerating(false);
+      };
+
+      // 複製功能
+      const handleCopy = () => {
+        if (!blessing) return;
+        document.execCommand('copy');
+        // 為了確保安全與相容性，使用 textarea 技巧來進行複製
+        const textArea = document.createElement("textarea");
+        textArea.value = blessing;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          setCopySuccess(true);
+          setTimeout(() => setCopySuccess(false), 2000);
+        } catch (err) {
+          console.error('Copy failed', err);
+        }
+        document.body.removeChild(textArea);
+      };
+
+      // Icons
       const HeartIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto text-rose-400 mb-8"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>;
       const HeartIconSmall = () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto text-rose-400 mb-6"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>;
       const ArrowRightIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="rotate-90 text-white/70"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>;
@@ -38,9 +109,13 @@
       const ClockIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>;
       const MapPinIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>;
       const ExternalLinkIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>;
+      const SparklesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M7 5H3"/><path d="M21 17v4"/><path d="M23 19h-4"/></svg>;
+      const CopyIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>;
+      const CheckIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600"><path d="M20 6 9 17l-5-5"/></svg>;
 
       return (
         <div className="min-h-screen">
+          {/* 首圖 */}
           <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
             <div className="absolute inset-0">
               <img src={weddingInfo.coverImage} alt="Cover" className="w-full h-full object-cover opacity-80" />
@@ -62,6 +137,7 @@
             </div>
           </section>
 
+          {/* 邀請文字 */}
           <section className="py-24 px-6 text-center max-w-3xl mx-auto">
             <HeartIcon />
             <h2 className="text-2xl md:text-3xl font-serif text-stone-700 mb-8 tracking-widest">
@@ -75,6 +151,7 @@
             </div>
           </section>
 
+          {/* 婚宴資訊 */}
           <section className="py-20 bg-stone-100/50">
             <div className="max-w-4xl mx-auto px-6">
               <h2 className="text-2xl font-serif text-center text-stone-700 mb-16 tracking-widest">婚宴資訊</h2>
@@ -105,6 +182,7 @@
             </div>
           </section>
 
+          {/* 相簿 */}
           <section className="py-24 px-4 max-w-6xl mx-auto">
             <h2 className="text-2xl font-serif text-center text-stone-700 mb-16 tracking-widest">相簿 Gallery</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -120,6 +198,73 @@
             </div>
           </section>
 
+          {/* ✨ 新增：AI 專屬祝福語產生器 */}
+          <section className="py-20 px-6 bg-stone-50 border-t border-b border-stone-200">
+            <div className="max-w-2xl mx-auto">
+              <div className="text-center mb-10">
+                <div className="flex justify-center items-center gap-2 mb-4">
+                  <SparklesIcon />
+                  <h2 className="text-2xl font-serif text-stone-700 tracking-widest">AI 專屬祝福語產生器</h2>
+                  <SparklesIcon />
+                </div>
+                <p className="text-stone-500">不知道該在回覆表單或紅包袋上寫什麼嗎？讓 AI 幫您構思最真摯的祝福！</p>
+              </div>
+
+              <div className="bg-white p-8 rounded-2xl shadow-sm border border-stone-100">
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-stone-600 mb-2">您與新人的關係</label>
+                    <input 
+                      type="text" 
+                      placeholder="例如：大學同學、同事、表哥..." 
+                      value={relation}
+                      onChange={(e) => setRelation(e.target.value)}
+                      className="w-full px-4 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-stone-600 mb-2">希望的語氣風格</label>
+                    <select 
+                      value={tone}
+                      onChange={(e) => setTone(e.target.value)}
+                      className="w-full px-4 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 transition-all"
+                    >
+                      <option value="溫馨感人">溫馨感人</option>
+                      <option value="幽默風趣">幽默風趣</option>
+                      <option value="真摯簡潔">真摯簡潔</option>
+                      <option value="長輩叮嚀">長輩叮嚀</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={handleGenerateBlessing}
+                  disabled={isGenerating}
+                  className="w-full flex items-center justify-center gap-2 bg-rose-400 hover:bg-rose-500 text-white font-medium py-3 rounded-lg transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {isGenerating ? "✨ 靈感湧現中..." : "✨ 幫我產生祝福語"}
+                </button>
+
+                {blessing && (
+                  <div className="mt-6 pt-6 border-t border-stone-100 animate-fade-in">
+                    <p className="text-stone-700 leading-relaxed bg-stone-50 p-4 rounded-lg italic">
+                      「{blessing}」
+                    </p>
+                    <div className="flex justify-end mt-3">
+                      <button 
+                        onClick={handleCopy}
+                        className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-800 transition-colors"
+                      >
+                        {copySuccess ? <><CheckIcon /> 已複製</> : <><CopyIcon /> 複製祝福語</>}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* 出席回覆 */}
           <section className="py-24 bg-stone-800 text-stone-50">
             <div className="max-w-2xl mx-auto px-6">
               <h2 className="text-2xl font-serif text-center mb-12 tracking-widest">出席回覆 RSVP</h2>
@@ -152,5 +297,15 @@
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App />);
   </script>
+  
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+  </style>
 </body>
 </html>
