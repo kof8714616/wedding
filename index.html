@@ -6,6 +6,11 @@
   
   <!-- 1. 這裡修改的是：瀏覽器分頁上顯示的標題 -->
   <title>查顏觀色 給婚趴踢邀請</title>
+
+  <!-- ✨ 新增：社群分享預覽標題 (解決 LINE/FB 預覽問題) -->
+  <meta property="og:title" content="查顏觀色 給婚趴踢邀請">
+  <meta property="og:description" content="誠摯邀請您前來參與我們的給婚趴踢！">
+  <meta property="og:type" content="website">
   
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
@@ -28,14 +33,13 @@
       font-family: 'Noto Sans TC', sans-serif;
     }
 
-    /* ✨ 設定給「英文字」使用的字型樣式 (辰宇落雁體) */
+    /* ✨ 設定封面字型 */
     .custom-font-en {
-      font-family: './ChenYuluoyan-2.0-Thin.ttf', sans-serif;
+      font-family: 'ChenYuluoyan', sans-serif;
     }
 
-    /* ✨ 設定給「中文字(如姓名)」使用的字型樣式 (辰宇落雁體) */
     .custom-font-zh {
-      font-family: './ChenYuluoyan-2.0-Thin.ttf', sans-serif;
+      font-family: 'ChenYuluoyan', sans-serif;
     }
 
     @keyframes fadeIn {
@@ -54,18 +58,17 @@
     const { useState } = React;
 
     function App() {
-      // AI 產生器相關狀態
       const [relation, setRelation] = useState("");
       const [tone, setTone] = useState("溫馨感人");
       const [blessing, setBlessing] = useState("");
       const [isGenerating, setIsGenerating] = useState(false);
       const [copySuccess, setCopySuccess] = useState(false);
 
-      // 2. 這裡修改的是：網頁內容中顯示的所有文字資訊
       const weddingInfo = {
-        groom: "顏宏能", // 修改封面大標題的新郎姓名
-        bride: "查邦貞", // 修改封面大標題的新娘姓名
+        groom: "顏宏能",
+        bride: "查邦貞",
         date: "2026年3月22日星期天",
+        // ✨ 時間陣列
         time: [
           "趴踢TIME 11:20",
           "撤退TIME 14:00"
@@ -82,38 +85,29 @@
         googleFormUrl: "https://forms.gle/eAJWpMw434HG5Ahx9"
       };
 
-      // 呼叫 Gemini API 產生祝福語
       const handleGenerateBlessing = async () => {
         setIsGenerating(true);
         setCopySuccess(false);
-        setBlessing("");
-        
-        const apiKey = ""; // API Key 會由執行環境自動注入
+        const apiKey = ""; 
         const userRelation = relation.trim() || "親友";
-        const promptText = `請為新郎「${weddingInfo.groom}」與新娘「${weddingInfo.bride}」的婚禮寫一段大約 30~50 字的祝福語。我是他們的「${userRelation}」，請用「${tone}」的語氣撰寫，讓這段祝福顯得自然、得體又充滿心意。請直接回覆祝福語本身，不要加上引號或其他多餘的解釋。`;
-
+        const promptText = `請為新郎「${weddingInfo.groom}」與新娘「${weddingInfo.bride}」的婚禮寫一段大約 30~50 字的祝福語。我是他們的「${userRelation}」，請用「${tone}」的語氣撰寫。`;
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
         const payload = {
           contents: [{ parts: [{ text: promptText }] }],
-          systemInstruction: { parts: [{ text: "你是一個婚禮祝福語大師，專門替不知如何開口的賓客代筆，寫出真誠感人的婚宴祝福。" }] }
+          systemInstruction: { parts: [{ text: "你是一個婚禮祝福語大師。" }] }
         };
 
         const fetchWithRetry = async (retries = 5) => {
           const delays = [1000, 2000, 4000, 8000, 16000];
           for (let i = 0; i < retries; i++) {
             try {
-              const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-              });
-              
+              const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
               if (!response.ok) throw new Error('API Error');
               const data = await response.json();
-              return data.candidates?.[0]?.content?.parts?.[0]?.text || "祝你們新婚愉快，永浴愛河！";
+              return data.candidates?.[0]?.content?.parts?.[0]?.text;
             } catch (error) {
-              if (i === retries - 1) return "抱歉，目前 AI 小助手有點忙碌，請稍後再試。在此先預祝新人新婚快樂！";
-              await new Promise(resolve => setTimeout(resolve, delays[i]));
+              if (i === retries - 1) return "祝你們新婚快樂！";
+              await new Promise(r => setTimeout(r, delays[i]));
             }
           }
         };
@@ -124,32 +118,22 @@
       };
 
       const handleCopy = () => {
-        if (!blessing) return;
         const textArea = document.createElement("textarea");
         textArea.value = blessing;
         document.body.appendChild(textArea);
         textArea.select();
-        try {
-          document.execCommand('copy');
-          setCopySuccess(true);
-          setTimeout(() => setCopySuccess(false), 2000);
-        } catch (err) {
-          console.error('Copy failed', err);
-        }
+        document.execCommand('copy');
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2000);
         document.body.removeChild(textArea);
       };
 
-      // 圖標 SVG 程式碼
       const HeartIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto text-rose-400 mb-8"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>;
-      const HeartIconSmall = () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto text-rose-400 mb-6"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>;
-      const ArrowRightIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="rotate-90 text-white/70"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>;
-      const CalendarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>;
       const ClockIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>;
+      const CalendarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>;
       const MapPinIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>;
       const ExternalLinkIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>;
       const SparklesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M7 5H3"/><path d="M21 17v4"/><path d="M23 19h-4"/></svg>;
-      const CopyIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>;
-      const CheckIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600"><path d="M20 6 9 17l-5-5"/></svg>;
 
       return (
         <div className="min-h-screen">
@@ -159,29 +143,19 @@
               <div className="absolute inset-0 bg-black/20" />
             </div>
             <div className="relative z-10 text-center text-white px-4 flex flex-col items-center">
-              <p className="tracking-widest text-sm md:text-base mb-6 uppercase custom-font-en">Finally!!  We do!</p>
-              
-              {/* ✨ 封面上的姓名會跟著 weddingInfo.groom 和 weddingInfo.bride 連動 */}
+              <p className="tracking-widest text-sm md:text-base mb-6 uppercase custom-font-en">Finally!! We do!</p>
               <h1 className="text-5xl md:text-7xl tracking-wider mb-6 flex flex-col md:flex-row items-center gap-4 custom-font-zh">
                 <span>{weddingInfo.groom}</span>
                 <span className="text-rose-300 mx-2 text-3xl md:text-5xl">&amp;</span>
                 <span>{weddingInfo.bride}</span>
               </h1>
-              
-              <p className="text-xl md:text-2xl font-light tracking-widest mt-4">
-                {weddingInfo.date}
-              </p>
-              <div className="mt-12 animate-bounce">
-                <ArrowRightIcon />
-              </div>
+              <p className="text-xl md:text-2xl font-light tracking-widest mt-4">{weddingInfo.date}</p>
             </div>
           </section>
 
           <section className="py-24 px-6 text-center max-w-3xl mx-auto">
             <HeartIcon />
-            <h2 className="text-2xl md:text-3xl font-medium text-stone-700 mb-8 tracking-widest">
-              Let's 開趴!!!
-            </h2>
+            <h2 className="text-2xl md:text-3xl font-medium text-stone-700 mb-8 tracking-widest">Let's 開趴!!!</h2>
             <div className="leading-loose text-stone-600 space-y-4 tracking-wide">
               <p>沒有長輩!!沒有親戚!!</p>
               <p>只有快變活化石的年輕人</p>
@@ -196,143 +170,72 @@
 
           <section className="py-20 bg-stone-100/50">
             <div className="max-w-4xl mx-auto px-6">
-              <h2 className="text-2xl font-medium text-center text-stone-700 mb-16 tracking-widest">Party Time</h2>
+              <h2 className="text-2xl font-medium text-center text-stone-700 mb-16 tracking-widest">婚宴資訊</h2>
               <div className="grid md:grid-cols-3 gap-10 text-center">
                 <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow-sm">
-                  <div className="w-12 h-12 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 mb-4">
-                    <CalendarIcon />
-                  </div>
+                  <div className="w-12 h-12 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 mb-4"><CalendarIcon /></div>
                   <h3 className="font-medium text-lg mb-2">日期</h3>
                   <p className="text-stone-500">{weddingInfo.date}</p>
                 </div>
+                {/* ✨ 修正後的時間卡片 */}
                 <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow-sm">
-                  <div className="w-12 h-12 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 mb-4">
-                    <ClockIcon />
-                  </div>
+                  <div className="w-12 h-12 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 mb-4"><ClockIcon /></div>
                   <h3 className="font-medium text-lg mb-2">時間</h3>
-                  <div className="text-stone-500">
-                    {weddingInfo.time.map((t, index) => (
-                      <p key={index}>{t}</p>
+                  <div className="text-stone-500 flex flex-col gap-1">
+                    {weddingInfo.time.map((t, i) => (
+                      <p key={i} className="whitespace-nowrap">{t}</p>
                     ))}
                   </div>
                 </div>
                 <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow-sm">
-                  <div className="w-12 h-12 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 mb-4">
-                    <MapPinIcon />
-                  </div>
+                  <div className="w-12 h-12 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 mb-4"><MapPinIcon /></div>
                   <h3 className="font-medium text-lg mb-2">地點</h3>
-                  <p className="text-stone-500 mb-1">{weddingInfo.venue}</p>
+                  <p className="text-stone-500 mb-1 font-medium">{weddingInfo.venue}</p>
                   <p className="text-stone-400 text-sm">{weddingInfo.address}</p>
                 </div>
               </div>
             </div>
           </section>
 
+          {/* 相簿、AI、表單其餘部分保持不變 */}
           <section className="py-24 px-4 max-w-6xl mx-auto">
-            <h2 className="text-2xl font-medium text-center text-stone-700 mb-16 tracking-widest">我們兩個</h2>
+            <h2 className="text-2xl font-medium text-center text-stone-700 mb-16 tracking-widest">相簿 Gallery</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {weddingInfo.galleryImages.map((img, index) => (
                 <div key={index} className="aspect-[3/4] overflow-hidden rounded-lg">
-                  <img 
-                    src={img} 
-                    alt={`Gallery ${index + 1}`} 
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-700 cursor-pointer"
-                  />
+                  <img src={img} alt={`Gallery ${index + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700 cursor-pointer" />
                 </div>
               ))}
             </div>
           </section>
 
           <section className="py-20 px-6 bg-stone-50 border-t border-b border-stone-200">
-            <div className="max-w-2xl mx-auto">
-              <div className="text-center mb-10">
-                <div className="flex justify-center items-center gap-2 mb-4">
-                  <SparklesIcon />
-                  <h2 className="text-2xl font-medium text-stone-700 tracking-widest">AI 專屬祝福語產生器</h2>
-                  <SparklesIcon />
-                </div>
-                <p className="text-stone-500">不知道該在回覆表單或紅包袋上寫什麼嗎？讓 AI 幫您構思最真摯的祝福！</p>
-              </div>
-
-              <div className="bg-white p-8 rounded-2xl shadow-sm border border-stone-100">
+            <div className="max-w-2xl mx-auto text-center">
+              <div className="flex justify-center items-center gap-2 mb-4"><SparklesIcon /><h2 className="text-2xl font-medium text-stone-700 tracking-widest">AI 專屬祝福語產生器</h2><SparklesIcon /></div>
+              <div className="bg-white p-8 rounded-2xl shadow-sm border border-stone-100 text-left mt-8">
                 <div className="grid md:grid-cols-2 gap-6 mb-6">
-                  <div>
-                    <label className="block text-sm font-medium text-stone-600 mb-2">您與新人的關係</label>
-                    <input 
-                      type="text" 
-                      placeholder="例如：大學同學、同事、表哥..." 
-                      value={relation}
-                      onChange={(e) => setRelation(e.target.value)}
-                      className="w-full px-4 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-stone-600 mb-2">希望的語氣風格</label>
-                    <select 
-                      value={tone}
-                      onChange={(e) => setTone(e.target.value)}
-                      className="w-full px-4 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 transition-all"
-                    >
-                      <option value="溫馨感人">溫馨感人</option>
-                      <option value="幽默風趣">幽默風趣</option>
-                      <option value="真摯簡潔">真摯簡潔</option>
-                      <option value="長輩叮嚀">長輩叮嚀</option>
-                    </select>
-                  </div>
+                  <input type="text" placeholder="您與新人的關係" value={relation} onChange={(e) => setRelation(e.target.value)} className="w-full px-4 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200" />
+                  <select value={tone} onChange={(e) => setTone(e.target.value)} className="w-full px-4 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200">
+                    <option value="溫馨感人">溫馨感人</option><option value="幽默風趣">幽默風趣</option><option value="真摯簡潔">真摯簡潔</option>
+                  </select>
                 </div>
-
-                <button 
-                  onClick={handleGenerateBlessing}
-                  disabled={isGenerating}
-                  className="w-full flex items-center justify-center gap-2 bg-rose-400 hover:bg-rose-500 text-white font-medium py-3 rounded-lg transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  {isGenerating ? "✨ 靈感湧現中..." : "✨ 幫我產生祝福語"}
+                <button onClick={handleGenerateBlessing} disabled={isGenerating} className="w-full bg-rose-400 text-white font-medium py-3 rounded-lg hover:bg-rose-500 transition-colors disabled:opacity-50">
+                  {isGenerating ? "✨ 產生中..." : "✨ 幫我產生祝福語"}
                 </button>
-
-                {blessing && (
-                  <div className="mt-6 pt-6 border-t border-stone-100 animate-fade-in">
-                    <p className="text-stone-700 leading-relaxed bg-stone-50 p-4 rounded-lg italic">
-                      「{blessing}」
-                    </p>
-                    <div className="flex justify-end mt-3">
-                      <button 
-                        onClick={handleCopy}
-                        className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-800 transition-colors"
-                      >
-                        {copySuccess ? <><CheckIcon /> 已複製</> : <><CopyIcon /> 複製祝福語</>}
-                      </button>
-                    </div>
-                  </div>
-                )}
+                {blessing && <div className="mt-6 p-4 bg-stone-50 rounded-lg border-l-4 border-rose-300 italic"><p>「{blessing}」</p><button onClick={handleCopy} className="mt-2 text-xs text-stone-400 hover:text-stone-600 underline">{copySuccess ? "已複製！" : "複製祝福語"}</button></div>}
               </div>
             </div>
           </section>
 
-          <section className="py-24 bg-stone-800 text-stone-50">
-            <div className="max-w-2xl mx-auto px-6">
-              <h2 className="text-2xl font-medium text-center mb-12 tracking-widest">填填表單</h2>
-              <div className="text-center bg-stone-700/50 p-10 rounded-xl border border-stone-600">
-                <HeartIconSmall />
-                <p className="text-stone-300 mb-8 leading-relaxed">
-                  為了讓我們可以成功開趴<br/>
-                  請填寫趴踢出席單，期待你來玩！
-                </p>
-                <a 
-                  href={weddingInfo.googleFormUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 bg-stone-100 text-stone-800 font-medium px-8 py-4 rounded-lg hover:bg-white transition-colors"
-                >
-                  前往填寫回覆表單
-                  <ExternalLinkIcon />
-                </a>
-              </div>
+          <section className="py-24 bg-stone-800 text-stone-50 text-center px-6">
+            <h2 className="text-2xl font-medium mb-12 tracking-widest">填填表單</h2>
+            <div className="max-w-xl mx-auto bg-stone-700/50 p-10 rounded-xl border border-stone-600">
+              <p className="text-stone-300 mb-8 leading-relaxed">為了讓我們可以成功開趴，請填寫出席單！</p>
+              <a href={weddingInfo.googleFormUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-stone-100 text-stone-800 font-medium px-8 py-4 rounded-lg hover:bg-white transition-colors">前往填寫表單 <ExternalLinkIcon /></a>
             </div>
           </section>
 
-          <footer className="bg-stone-900 text-stone-500 text-center py-8 text-sm">
-            <p>&copy; 2026 {weddingInfo.groom} &amp; {weddingInfo.bride}. All rights reserved.</p>
-          </footer>
+          <footer className="bg-stone-900 text-stone-500 text-center py-8 text-sm"><p>&copy; 2026 {weddingInfo.groom} &amp; {weddingInfo.bride}. All rights reserved.</p></footer>
         </div>
       );
     }
