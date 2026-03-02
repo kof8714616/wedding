@@ -8,8 +8,43 @@
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    /* ✨ 引入思源黑體作為全站預設 */
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+
+    /* ✨ 透過開源 CDN 引入「辰宇落雁體」 */
+    @font-face {
+      font-family: 'ChenYuluoyan';
+      src: url('https://cdn.jsdelivr.net/gh/Chenyu-otf/chenyuluoyan_thin@main/ChenYuluoyan-Thin.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    /* ✨ 全站預設改為思源黑體 */
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+
+    /* ✨ 設定給「英文字」使用的字型樣式 (改為辰宇落雁體) */
+    .custom-font-en {
+      font-family: 'ChenYuluoyan', sans-serif;
+    }
+
+    /* ✨ 設定給「中文字(如姓名)」使用的字型樣式 (改為辰宇落雁體) */
+    .custom-font-zh {
+      font-family: 'ChenYuluoyan', sans-serif;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+  </style>
 </head>
-<body class="bg-[#FDFBF7] text-stone-800 font-sans selection:bg-rose-200">
+<body class="bg-[#FDFBF7] text-stone-800 selection:bg-rose-200">
   <div id="root"></div>
 
   <script type="text/babel">
@@ -126,12 +161,16 @@
               <div className="absolute inset-0 bg-black/20" />
             </div>
             <div className="relative z-10 text-center text-white px-4 flex flex-col items-center">
-              <p className="tracking-widest text-sm md:text-base mb-6 uppercase">Finally!! We do!</p>
-              <h1 className="text-5xl md:text-7xl font-serif tracking-wider mb-6 flex flex-col md:flex-row items-center gap-4">
+              {/* ✨ 加上 custom-font-en 類別 */}
+              <p className="tracking-widest text-sm md:text-base mb-6 uppercase custom-font-en">Finally!! We do!</p>
+              
+              {/* ✨ 加上 custom-font-zh 類別 */}
+              <h1 className="text-5xl md:text-7xl tracking-wider mb-6 flex flex-col md:flex-row items-center gap-4 custom-font-zh">
                 <span>{weddingInfo.groom}</span>
                 <span className="text-rose-300 mx-2 text-3xl md:text-5xl">&amp;</span>
                 <span>{weddingInfo.bride}</span>
               </h1>
+              
               <p className="text-xl md:text-2xl font-light tracking-widest mt-4">
                 {weddingInfo.date}
               </p>
@@ -144,7 +183,7 @@
           {/* 邀請文字 */}
           <section className="py-24 px-6 text-center max-w-3xl mx-auto">
             <HeartIcon />
-            <h2 className="text-2xl md:text-3xl font-serif text-stone-700 mb-8 tracking-widest">
+            <h2 className="text-2xl md:text-3xl font-medium text-stone-700 mb-8 tracking-widest">
               Let's 開趴!!!
             </h2>
             <div className="leading-loose text-stone-600 space-y-4 tracking-wide">
@@ -162,7 +201,7 @@
           {/* 婚宴資訊 */}
           <section className="py-20 bg-stone-100/50">
             <div className="max-w-4xl mx-auto px-6">
-              <h2 className="text-2xl font-serif text-center text-stone-700 mb-16 tracking-widest">婚宴資訊</h2>
+              <h2 className="text-2xl font-medium text-center text-stone-700 mb-16 tracking-widest">婚宴資訊</h2>
               <div className="grid md:grid-cols-3 gap-10 text-center">
                 <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow-sm">
                   <div className="w-12 h-12 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 mb-4">
@@ -196,7 +235,7 @@
 
           {/* 相簿 */}
           <section className="py-24 px-4 max-w-6xl mx-auto">
-            <h2 className="text-2xl font-serif text-center text-stone-700 mb-16 tracking-widest">我們兩個</h2>
+            <h2 className="text-2xl font-medium text-center text-stone-700 mb-16 tracking-widest">我們兩個</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {weddingInfo.galleryImages.map((img, index) => (
                 <div key={index} className="aspect-[3/4] overflow-hidden rounded-lg">
@@ -216,7 +255,7 @@
               <div className="text-center mb-10">
                 <div className="flex justify-center items-center gap-2 mb-4">
                   <SparklesIcon />
-                  <h2 className="text-2xl font-serif text-stone-700 tracking-widest">AI 專屬祝福語產生器</h2>
+                  <h2 className="text-2xl font-medium text-stone-700 tracking-widest">AI 專屬祝福語產生器</h2>
                   <SparklesIcon />
                 </div>
                 <p className="text-stone-500">不知道該在回覆表單或紅包袋上寫什麼嗎？讓 AI 幫您構思最真摯的祝福！</p>
@@ -279,7 +318,7 @@
           {/* 出席回覆 */}
           <section className="py-24 bg-stone-800 text-stone-50">
             <div className="max-w-2xl mx-auto px-6">
-              <h2 className="text-2xl font-serif text-center mb-12 tracking-widest">填填表單</h2>
+              <h2 className="text-2xl font-medium text-center mb-12 tracking-widest">填填表單</h2>
               <div className="text-center bg-stone-700/50 p-10 rounded-xl border border-stone-600">
                 <HeartIconSmall />
                 <p className="text-stone-300 mb-8 leading-relaxed">
@@ -309,15 +348,5 @@
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App />);
   </script>
-  
-  <style>
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fade-in {
-      animation: fadeIn 0.5s ease-out forwards;
-    }
-  </style>
 </body>
 </html>
